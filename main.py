@@ -58,4 +58,27 @@ def start(update: Update, context: CallbackContext) -> int:
 def genre_chosen(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
     if update.message.text in GENRES:
-        context.user_data['genre'] = update.message
+        context.user_data['genre'] = update.message.text
+        story_text = generate_story(context.user_data['genre'])
+        options = generate_options(story_text)
+        update.message.reply_text(f"Отлично! \n\n{story_text}\n\nЧто будет дальше? \n\n{options}")
+        return CHOOSING_OPTION
+    else:
+        update.message.reply_text("Извини, я не понял. \n\nВыбери жанр истории: {', '.join(GENRES)}.")
+        return CHOOSING
+
+# Обработка выбора варианта
+def option_chosen(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    user = update.effective_user
+    data = query.data
+    
+    # Проверка наличия данных
+    if not data or len(data) == 0:
+        query.answer("Произошла ошибка при выборе варианта. Попробуйте снова.")
+        return CHOOSING_OPTION
+    
+    context.user_data["selected_option"] = data
+    story_text = generate_story(context.user_data["genre"])
+    update.message.reply_text(f"{story_text}\n\nЧто будет дальше?")
+    return CHOOSING_OPTION
